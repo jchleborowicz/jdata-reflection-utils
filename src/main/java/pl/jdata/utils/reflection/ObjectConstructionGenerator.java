@@ -26,7 +26,7 @@ import static java.util.stream.Collectors.joining;
 public class ObjectConstructionGenerator {
 
     private static final Map<Class, Supplier<String>> SIMPLE_VALUE_GENERATORS = new HashMap<>();
-    private static final Set<String> IGNORED_PROPERTY_NAMES = Sets.newHashSet("class", "bytes");
+    private static final Set<String> IGNORED_PROPERTY_NAMES = Sets.newHashSet("class", "bytes", "declaringClass");
 
     private static final Random RANDOM = new Random();
 
@@ -245,11 +245,14 @@ public class ObjectConstructionGenerator {
     }
 
 
-    private static boolean isSimpleValue(Class<?> listType) {
-        return SIMPLE_VALUE_GENERATORS.containsKey(listType);
+    private static boolean isSimpleValue(Class<?> type) {
+        return SIMPLE_VALUE_GENERATORS.containsKey(type) || type.isEnum();
     }
 
     private static String generateSimpleValue(Class<?> type) {
+        if (type.isEnum()) {
+            return type.getSimpleName() + "." + type.getDeclaredFields()[0].getName();
+        }
         return SIMPLE_VALUE_GENERATORS.get(type).get();
     }
 
