@@ -1,32 +1,28 @@
 package pl.jdata.utils.reflection;
 
-        import com.google.common.collect.Sets;
-        import org.apache.commons.beanutils.PropertyUtils;
-        import org.apache.commons.lang3.RandomStringUtils;
-        import org.apache.commons.lang3.StringEscapeUtils;
-        import org.apache.commons.lang3.StringUtils;
+import com.google.common.collect.Sets;
+import org.apache.commons.beanutils.PropertyUtils;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.StringUtils;
 
-        import java.beans.PropertyDescriptor;
-        import java.lang.reflect.Method;
-        import java.lang.reflect.ParameterizedType;
-        import java.lang.reflect.Type;
-        import java.lang.reflect.TypeVariable;
-        import java.util.Date;
-        import java.util.HashMap;
-        import java.util.List;
-        import java.util.Map;
-        import java.util.Random;
-        import java.util.Set;
-        import java.util.UUID;
-        import java.util.function.Supplier;
-        import java.util.stream.Stream;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
-        import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.joining;
 
-/**
- * This class is used to generate preliminary template for creation of object of given class.
- * This is working version and it should be moved to cosmose-test-commons.
- */
 public class ObjectConstructionGenerator {
 
     private static final Map<Class, Supplier<String>> SIMPLE_VALUE_GENERATORS = new HashMap<>();
@@ -58,7 +54,11 @@ public class ObjectConstructionGenerator {
     }
 
     public static void main(String[] args) {
-        final ObjectConstructionGenerator generator = new ObjectConstructionGenerator(String.class);
+        generate(String.class);
+    }
+
+    public static void generate(Class aClass) {
+        final ObjectConstructionGenerator generator = new ObjectConstructionGenerator(aClass);
 
         try {
             final String result = generator.generate();
@@ -67,7 +67,6 @@ public class ObjectConstructionGenerator {
             System.out.println(generator.outputPrinter.toString());
             throw e;
         }
-
     }
 
     private String generate() {
@@ -98,7 +97,7 @@ public class ObjectConstructionGenerator {
         if (isSimpleValue(variableType)) {
             final String value = generateSimpleValue(variableType);
             outputPrinter.printAssignment(variableType.getSimpleName(), variableName, value);
-        } else if (variableType.getName().startsWith("co.cosmose.brandmanager.")) {
+        } else if (variableType.getName().startsWith(targetClass.getPackage().getName())) {
             String typeDeclaration = variableType.getSimpleName();
             String value = "new " + variableType.getSimpleName();
 
@@ -188,7 +187,8 @@ public class ObjectConstructionGenerator {
 
                     final Class<?> actualPropertyType = getActualPropertyType(enclosingClass,
                             genericReturnType, enclosingParameterTypeArguments);
-                    final String generatedVariableName = printNewVariable(actualPropertyType, propertyActualParameterTypeArguments);
+                    final String generatedVariableName =
+                            printNewVariable(actualPropertyType, propertyActualParameterTypeArguments);
 
                     outputPrinter.printBlankLine()
                             .printMethodCall(variableName, setterName, generatedVariableName)
@@ -259,47 +259,3 @@ public class ObjectConstructionGenerator {
 
 }
 
-@SuppressWarnings("UnusedReturnValue")
-class GeneratorOutputPrinter {
-
-    private StringBuilder output = new StringBuilder();
-
-    private boolean emptyLinePrinted;
-
-    public GeneratorOutputPrinter printAssignment(String typeName, String variableName, String value) {
-        this.emptyLinePrinted = false;
-        output.append(String.format("    final %s %s = %s;\n", typeName, variableName, value));
-        return this;
-    }
-
-    public GeneratorOutputPrinter printListDeclaration(String elementType, String variableName) {
-        printAssignment("List<" + elementType + ">", variableName, "new ArrayList<>()");
-        return this;
-    }
-
-    public GeneratorOutputPrinter printAddToList(String listVariable, String value) {
-        this.emptyLinePrinted = false;
-        output.append(String.format("    %s.add(%s);\n", listVariable, value));
-        return this;
-    }
-
-    public GeneratorOutputPrinter printMethodCall(String variableName, String methodName, String value) {
-        this.emptyLinePrinted = false;
-        output.append(String.format("    %s.%s(%s);\n", variableName, methodName, value));
-        return this;
-    }
-
-    public GeneratorOutputPrinter printBlankLine() {
-        if (!emptyLinePrinted) {
-            output.append("\n");
-        }
-        emptyLinePrinted = true;
-        return this;
-    }
-
-    @Override
-    public String toString() {
-        return output.toString();
-    }
-
-}
