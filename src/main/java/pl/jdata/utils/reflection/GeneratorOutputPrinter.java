@@ -18,6 +18,11 @@ public class GeneratorOutputPrinter {
         return this;
     }
 
+    public GeneratorOutputPrinter printSetDeclaration(String elementType, String variableName) {
+        printAssignment("Set<" + elementType + ">", variableName, "new HashSet<>()");
+        return this;
+    }
+
     public GeneratorOutputPrinter printAddToList(String listVariable, String value) {
         this.emptyLinePrinted = false;
         output.append(String.format("    %s.add(%s);\n", listVariable, value));
@@ -42,5 +47,4 @@ public class GeneratorOutputPrinter {
     public String toString() {
         return output.toString();
     }
-
 }

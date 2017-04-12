@@ -157,23 +157,28 @@ public class ObjectConstructionGenerator {
             final String setterName = writeMethod.getName();
 
             final Class<?> propertyType = propertyDescriptor.getPropertyType();
-            if (propertyType == List.class) {
-                final Class<?> listElementType = getListElementType(propertyDescriptor.getReadMethod());
+            if (propertyType == List.class || propertyType == Set.class) {
+                final Class<?> elementType = getFirstTypeParameter(propertyDescriptor.getReadMethod());
 
-                final String listVariableName = getVariableName(propertyName);
+                final String collectionVariableName = getVariableName(propertyName);
 
-                outputPrinter.printBlankLine()
-                        .printListDeclaration(listElementType.getSimpleName(), listVariableName);
+                outputPrinter.printBlankLine();
 
-                final String generatedValue;
-                if (isSimpleValue(listElementType)) {
-                    generatedValue = generateSimpleValue(listElementType);
+                if (propertyType == List.class) {
+                    outputPrinter.printListDeclaration(elementType.getSimpleName(), collectionVariableName);
                 } else {
-                    generatedValue = printNewVariable(listElementType, null);
+                    outputPrinter.printSetDeclaration(elementType.getSimpleName(), collectionVariableName);
                 }
 
-                outputPrinter.printAddToList(listVariableName, generatedValue)
-                        .printMethodCall(variableName, setterName, listVariableName)
+                final String generatedValue;
+                if (isSimpleValue(elementType)) {
+                    generatedValue = generateSimpleValue(elementType);
+                } else {
+                    generatedValue = printNewVariable(elementType, null);
+                }
+
+                outputPrinter.printAddToList(collectionVariableName, generatedValue);
+                outputPrinter.printMethodCall(variableName, setterName, collectionVariableName)
                         .printBlankLine();
             } else {
                 if (isSimpleValue(propertyType)) {
@@ -248,7 +253,7 @@ public class ObjectConstructionGenerator {
         return SIMPLE_VALUE_GENERATORS.get(type).get();
     }
 
-    private static Class<?> getListElementType(Method method) {
+    private static Class<?> getFirstTypeParameter(Method method) {
         ParameterizedType pType = (ParameterizedType) method.getGenericReturnType();
         return (Class<?>) pType.getActualTypeArguments()[0];
     }
