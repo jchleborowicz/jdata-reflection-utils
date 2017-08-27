@@ -11,6 +11,9 @@
     <properties>
         <java.version>1.8</java.version>
 
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
         <!-- dependency versions -->
         <commons-beanutils.version>1.9.3</commons-beanutils.version>
         <commons-lang3.version>3.5</commons-lang3.version>
